@@ -1,50 +1,54 @@
 package gui;
-import core.Group;
-import core.Guest;
-import core.Room;
+
+import core.*;
 import utils.DateRange;
+import utils.Utils;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
 
-public class RecepcionistManager extends JPanel implements ActionListener , MouseMotionListener{
+public class RecepcionistManager extends JPanel implements ActionListener, MouseMotionListener {
     private GUI _gui;
     private JLabel servicesLabel;
     private JLabel roomsLabel;
     private final JButton checkin = new JButton("1. Check-in");
     private final JButton checkroom = new JButton("2. Check rooms");
-    private final JButton bill = new JButton("Print bill");
-    private JButton end = new JButton ("End adding");
-    private JButton add = new JButton ("Add member");
+    private final JButton bill = new JButton("Print bill and checkout");
+    private JButton end = new JButton("End adding");
+    private JButton add = new JButton("Add member");
     private JFrame f = new JFrame();
     private JDialog d = new JDialog(f, "Hotel DPOO | Guests", true);
     private JFrame f2 = new JFrame();
     private JDialog groupRoomsManager = new JDialog(f2, "Hotel DPOO | Group Assignation", true);
-    private JLabel name = new JLabel ("Name");
+    private JLabel name = new JLabel("Name");
     private JTextField namet = new JTextField();
-    private JLabel mail = new JLabel ("Mail");
+    private JLabel mail = new JLabel("Mail");
     private JTextField mailt = new JTextField();
-    private JLabel age = new JLabel ("Age");
+    private JLabel age = new JLabel("Age");
     private JTextField aget = new JTextField();
-    private JLabel document = new JLabel ("Identification Number");
+    private JLabel document = new JLabel("Identification Number");
     private JTextField documentt = new JTextField();
-    private JLabel id = new JLabel ("Name");
+    private JLabel id = new JLabel("Name");
     private JTextField idt = new JTextField();
 
-    private final JButton  Logout = new JButton("Logout");
-    private final JButton  Help = new JButton("Help");
+    private final JButton Logout = new JButton("Logout");
+    private final JButton Help = new JButton("Help");
     private ArrayList<Guest> guests;
 
     private JFrame x = new JFrame();
     private JDialog y = new JDialog(x, "Hotel DPOO | Rooms", true);
     private JButton salir = new JButton("Finish");
-    public void update(){
+
+    public void update() {
         //if (_gui.directory().restaurant()==null||_gui.directory().spa()==null||_gui.directory().tourGuide()==null)
         //{
 
@@ -63,7 +67,7 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
         //else
         //{
         setLayout(null);
-        setBounds(0, 250 , 900, 700);
+        setBounds(0, 250, 900, 700);
 
 
         servicesLabel = new JLabel("Services");
@@ -83,18 +87,26 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
         add(checkroom);
 
 
-
         roomsLabel = new JLabel("Group");
         roomsLabel.setFont(new Font(servicesLabel.getFont().getName(), Font.BOLD, 24));
         roomsLabel.setBounds(600, 30, 600, 70);
         add(roomsLabel);
 
-
         DefaultListModel<String> aa = new DefaultListModel<>();
-        aa.addElement("Apple");
-        aa.addElement("Orange");
-        aa.addElement("Banan");
-        aa.addElement("Grape");
+        //
+        HashMap<Long, Group> grupos1 = _gui.directory().groups();
+        for (Map.Entry<Long, Group> entry : grupos1.entrySet()) {
+            Long key = entry.getKey();
+            Group value = entry.getValue();
+            HashMap<Long, Guest> miembros = value.members();
+            aa.addElement("Grupo con identificacion " + value.id());
+
+
+            // do what you have to do here
+            // In your case, another loop.
+        }
+
+
         JList<String> grupos = new JList<String>(aa);
         grupos.setBounds(600, 30, 600, 70);
 
@@ -106,11 +118,10 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
         add(scrollpane);
 
 
-
-
         bill.setBackground(new Color(0x00ffe3));
         bill.setBounds(490, 300, 300, 31);
         bill.setFont(new Font("Franklin Gothic Medium", Font.PLAIN, 15));
+        bill.addActionListener(this);
         add(bill);
 
 
@@ -124,24 +135,24 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
         add(Help);
         //}
     }
-    public RecepcionistManager(GUI gui){
+
+    public RecepcionistManager(GUI gui) {
         _gui = gui;
     }
 
 
-
     @Override
     public void actionPerformed(ActionEvent event) {
-        if (event.getSource() == checkin){
+        if (event.getSource() == checkin) {
             guests = new ArrayList<>();
             d.setLayout(null);
 
             add.setBackground(new Color(0x00ffe3));
-            add.setBounds(390,200,130,31);
+            add.setBounds(390, 200, 130, 31);
             add.addActionListener(this);
 
             end.setBackground(new Color(0x00ffe3));
-            end.setBounds(520,200,130,31);
+            end.setBounds(520, 200, 130, 31);
             end.addActionListener(this);
 
             name.setFont(new Font(servicesLabel.getFont().getName(), Font.BOLD, 24));
@@ -164,7 +175,7 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
             id.setBounds(10, 10, 300, 31);
             idt.setBounds(10, 50, 300, 31);
 
-
+            checkroom.addActionListener(this);
             d.add(add);
             d.add(end);
             d.add(name);
@@ -178,13 +189,13 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
             d.add(id);
             d.add(idt);
 
-            d.setSize(700,300);
+            d.setSize(700, 300);
             d.setVisible(true);
 
 
         }
 
-        if  (event.getSource() == add) {
+        if (event.getSource() == add) {
             ///
             ///
             ///
@@ -205,33 +216,33 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
             d.setVisible(false);
             y.setLayout(null);
 
-            JLabel date = new JLabel ("Admission date");
+            JLabel date = new JLabel("Admission date DD-MM-AA (Only the number of year)");
             JTextField datet = new JTextField();
             date.setFont(new Font(servicesLabel.getFont().getName(), Font.BOLD, 24));
             date.setBounds(10, 40, 300, 31);
             datet.setBounds(10, 80, 300, 31);
 
-            JLabel date2 = new JLabel ("Departure date");
+            JLabel date2 = new JLabel("Departure date DD-MM-AA (Only the number of year)");
             JTextField date2t = new JTextField();
             date2.setFont(new Font(servicesLabel.getFont().getName(), Font.BOLD, 24));
             date2.setBounds(10, 120, 300, 31);
             date2t.setBounds(10, 160, 300, 31);
 
 
-            JLabel type = new JLabel ("Room type");
+            JLabel type = new JLabel("Room type");
             type.setFont(new Font(servicesLabel.getFont().getName(), Font.BOLD, 24));
             type.setBounds(360, 40, 300, 31);
             ButtonGroup g = new ButtonGroup();
             JRadioButton btn1 = new JRadioButton("Standard");
-            btn1.setBounds(360,80,100,31);
+            btn1.setBounds(360, 80, 100, 31);
             btn1.setSelected(true);
             JRadioButton btn2 = new JRadioButton("Suite");
-            btn2.setBounds(360,120,100,31);
+            btn2.setBounds(360, 120, 100, 31);
             JRadioButton btn3 = new JRadioButton("Double Suite");
-            btn3.setBounds(360,160,100,31);
+            btn3.setBounds(360, 160, 100, 31);
 
 
-            JLabel addition = new JLabel ("Addition");
+            JLabel addition = new JLabel("Addition");
             addition.setFont(new Font(servicesLabel.getFont().getName(), Font.BOLD, 24));
             addition.setBounds(550, 40, 300, 31);
             JCheckBox opc1 = new JCheckBox("Balcony");
@@ -243,42 +254,41 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
 
 
             salir.setBackground(new Color(0x00ffe3));
-            salir.setBounds(530,210,130,31);
+            salir.setBounds(530, 210, 130, 31);
             salir.addActionListener(
                     event_finish -> {
-                        if (event_finish.getSource() == salir){
+                        if (event_finish.getSource() == salir) {
+                            this.update();
                             int index = 0;
                             DateRange dateRange = new DateRange(datet.getText(), date2t.getText());
-                            while (index < _gui.directory().groups().get(group_id).members().values().size() - 1){
-                                for (Room room: _gui.directory().hotel().rooms().values()){
+                            while (index < _gui.directory().groups().get(group_id).members().values().size() - 1) {
+                                for (Room room : _gui.directory().hotel().rooms().values()) {
                                     boolean canOccupied = true;
-                                    for (DateRange dateRangeRoom: room.occupancyRanges()){
-                                        if (dateRangeRoom.inRange(dateRange)){
+                                    for (DateRange dateRangeRoom : room.occupancyRanges()) {
+                                        if (dateRangeRoom.inRange(dateRange)) {
                                             canOccupied = false;
                                             break;
                                         }
                                     }
                                     if (canOccupied) {
-                                        if (btn1.isSelected() && room.type().equals("single")){
-                                            while (room.canAddOccupant() && index < _gui.directory().groups().get(group_id).members().values().size() - 1){
+                                        if (btn1.isSelected() && room.type().equals("single")) {
+                                            while (room.canAddOccupant() && index < _gui.directory().groups().get(group_id).members().values().size() - 1) {
                                                 room.addOccupant((Guest) _gui.directory().groups().get(group_id).members().values().toArray()[index]);
-                                                index ++;
+                                                index++;
                                                 if (index >= _gui.directory().groups().get(group_id).members().size())
                                                     break;
                                             }
-                                        }
-                                        else if (btn2.isSelected() && room.type().equals("suite")){
-                                            while (room.canAddOccupant() && index < _gui.directory().groups().get(group_id).members().values().size() - 1){
+                                        } else if (btn2.isSelected() && room.type().equals("suite")) {
+                                            while (room.canAddOccupant() && index < _gui.directory().groups().get(group_id).members().values().size() - 1) {
                                                 room.addOccupant((Guest) _gui.directory().groups().get(group_id).members().values().toArray()[index]);
-                                                index ++;
+                                                index++;
                                                 if (index >= _gui.directory().groups().get(group_id).members().size())
                                                     break;
                                             }
-                                        }
-                                        else if (btn3.isSelected() && room.type().equals("double")){
-                                            while (room.canAddOccupant() && index < _gui.directory().groups().get(group_id).members().values().size() - 1){
+                                        } else if (btn3.isSelected() && room.type().equals("double")) {
+                                            while (room.canAddOccupant() && index < _gui.directory().groups().get(group_id).members().values().size() - 1) {
                                                 room.addOccupant((Guest) _gui.directory().groups().get(group_id).members().values().toArray()[index]);
-                                                index ++;
+                                                index++;
                                                 if (index >= _gui.directory().groups().get(group_id).members().size())
                                                     break;
                                             }
@@ -289,7 +299,7 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
                             y.setVisible(false);
                         }
                     }
-                );
+            );
 
 
             g.add(btn1);
@@ -313,13 +323,66 @@ public class RecepcionistManager extends JPanel implements ActionListener , Mous
             y.add(date2);
             y.add(date2t);
 
-            y.setSize(700,300);
+            y.setSize(700, 300);
             y.setVisible(true);
         }
 
-        if (event.getSource() == Logout)
-        {
+        if (event.getSource() == Logout) {
             _gui.change("login");
+        }
+        if (event.getSource() == bill) {
+            try {
+                Long idg = Long.valueOf(JOptionPane.showInputDialog(_gui, "Enter the id of the group for checkout"));
+                Group gruposel = _gui.directory().groups().get(idg);
+                String texto = "The cost of group is" + gruposel.bill() + "\n";
+                HashMap<Long, Guest> miembros = gruposel.members();
+                for (Map.Entry<Long, Guest> entry2 : miembros.entrySet()) {
+                    Long key2 = entry2.getKey();
+                    Guest value2 = entry2.getValue();
+                    texto = texto.concat("The member " + value2.name() + " has a consumpt of " + value2.bill() + "\n");
+                    File archivo = new File("src/sources/" + gruposel.id() + ".txt");
+                    if (!archivo.exists()) {
+                        try {
+                            archivo.createNewFile();
+                            BufferedWriter writer = Utils.write(archivo);
+                            writer.write(texto);
+                            writer.close();
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                    _gui.directory().groups().remove(idg);
+                    this.update();
+
+
+                    JOptionPane.showMessageDialog(_gui, "The bill is saved in the id of the group.txt", "Bill", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            } catch (Exception Ignored) {
+            }
+
+        }
+        if (event.getSource() == checkroom){
+            JFrame f= new JFrame();
+            JDialog d = new JDialog(f , "Dialog Restaurant", true);
+            d.setLayout(null);
+            DefaultListModel<String> aa3 = new DefaultListModel<>();
+            HashMap<Long, Room> platos= _gui.directory().hotel().rooms();
+            for(Map.Entry<Long, Room> entry : platos.entrySet()) {
+                Long key = entry.getKey();
+                Room value = entry.getValue();
+                aa3.addElement(key +" con precio de "+value.price());
+            }
+            JList<String> grupos2 = new JList<String>(aa3);
+            JScrollPane scrollpane = new JScrollPane(grupos2);
+            scrollpane.setBounds(0, 0, 500, 200);
+            scrollpane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+            f.add(scrollpane);
+            f.setSize(700,300);
+            f.setVisible(true);
         }
 
 
